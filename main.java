@@ -77,6 +77,12 @@ public class main extends ListenerAdapter {
             case "462753867449237506":
                 event.getGuild().getTextChannelById("1105589927451820072").sendMessage("JMT El Kalb Da5al el VC").queue();
                 break;
+            case "321367134699520000":
+                event.getGuild().getTextChannelById("1105589927451820072").sendMessage("ABO MOZE 7ADAR").queue();
+                break;
+            case "932010472268505159":
+                event.getGuild().getTextChannelById("1105589927451820072").sendMessage("EWWWW LARA").queue();
+                break;
             default:
                 return;
 
