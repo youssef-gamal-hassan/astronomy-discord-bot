@@ -24,7 +24,7 @@ public class main extends ListenerAdapter  {
     public String moonHttpRequest(String moonStyle){
         OkHttpClient client = new OkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), new JSONObject(new MoonPhase(new MoonStyle(moonStyle, "stars", "black", "white", "white"), new MoonObserver(30.064286239773992f, 31.493958476697806f, "2023-06-10"))).toString());
-        Request request = new Request.Builder().url("https://api.astronomyapi.com/api/v2/studio/moon-phase").addHeader("Authorization", "Bearer ZmQ5Y2M2ZjQtMGQ3ZS00MGJiLTg2OGQtOTZjNjg3OWEyMGZmOjE1ZjViYjc0N2I4YjY3ZmU3Mjg2MTJlNWEwZGVkZTdlNjNiYjhiYjk1ZDA3MDhhZDlmNzA3YWVkYTdjNzU5OWRjMjdhMjdkM2Q5YTVhOTVhMDFjNmUxZTgxZTdmYTIzNzdhOWI3ZDk1YzQ4MmYyODEyYmVkMmM3NmU2MDhjZGQyOWI3YmJiODY3Y2M5NzhkY2U0OTE5Njc3YWZjZjA0Zjk1Y2MzNTNiN2MyMGFkY2E3NDczODMzNDBlYzAyZTkzODRkNTcwYjRmY2FhNjhkYmU5NGYzYWM4ZDI1YzA3YWUx").post(body).build();
+        Request request = new Request.Builder().url("https://api.astronomyapi.com/api/v2/studio/moon-phase").addHeader("Authorization", "Bearer " + System.getenv("moonAPI")).post(body).build();
         Call call = client.newCall(request);
         try (Response response = call.execute()) {
             JSONObject obj = new JSONObject(response.body().string());
