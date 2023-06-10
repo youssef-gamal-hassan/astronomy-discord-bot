@@ -1,18 +1,44 @@
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
+import okhttp3.*;
+import org.json.JSONObject;
 
-public class main extends ListenerAdapter {
+import java.io.IOException;
+
+public class main extends ListenerAdapter  {
+    public static void updateCommands(JDA jda){
+        CommandListUpdateAction commands = jda.updateCommands();
+        commands.addCommands(Commands.slash("moon-phase", "Today's Moon Phase").addOptions(new OptionData(OptionType.STRING, "moon-style", "pick your preferred moon style", true).addChoice("default", "default").addChoice("sketch", "sketch").addChoice("shaded", "shaded")));
+        commands.queue();
+        System.out.println("Commands Updated!");
+    }
+    public String moonHttpRequest(String moonStyle){
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), new JSONObject(new MoonPhase(new MoonStyle(moonStyle, "stars", "black", "white", "white"), new MoonObserver(30.064286239773992f, 31.493958476697806f, "2023-06-10"))).toString());
+        Request request = new Request.Builder().url("https://api.astronomyapi.com/api/v2/studio/moon-phase").addHeader("Authorization", "Bearer ZmQ5Y2M2ZjQtMGQ3ZS00MGJiLTg2OGQtOTZjNjg3OWEyMGZmOjE1ZjViYjc0N2I4YjY3ZmU3Mjg2MTJlNWEwZGVkZTdlNjNiYjhiYjk1ZDA3MDhhZDlmNzA3YWVkYTdjNzU5OWRjMjdhMjdkM2Q5YTVhOTVhMDFjNmUxZTgxZTdmYTIzNzdhOWI3ZDk1YzQ4MmYyODEyYmVkMmM3NmU2MDhjZGQyOWI3YmJiODY3Y2M5NzhkY2U0OTE5Njc3YWZjZjA0Zjk1Y2MzNTNiN2MyMGFkY2E3NDczODMzNDBlYzAyZTkzODRkNTcwYjRmY2FhNjhkYmU5NGYzYWM4ZDI1YzA3YWUx").post(body).build();
+        Call call = client.newCall(request);
+        try (Response response = call.execute()) {
+            JSONObject obj = new JSONObject(response.body().string());
+            String image = obj.getJSONObject("data").getString("imageUrl");
+            return image;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void main(String[] args) throws InterruptedException {
+
+
+
         JDA jda = JDABuilder.createDefault(System.getenv("token"))
                 .addEventListeners(new main())
                 .enableIntents(GatewayIntent.GUILD_VOICE_STATES)
@@ -21,12 +47,6 @@ public class main extends ListenerAdapter {
 
 
         jda.awaitReady();
-        CommandListUpdateAction commands = jda.updateCommands();
-        commands.addCommands(Commands.slash("say", "repeats shit").addOption(OptionType.STRING, "shit-to-repeat", "shit", true).addOption(OptionType.INTEGER, "times-to-repeat", "damn", false));
-        commands.addCommands(Commands.slash("jmt", "jmt el kalb"));
-        commands.addCommands(Commands.slash("lara", "wamen").addOption(OptionType.BOOLEAN, "is-stupid", "was she stupid?", true));
-        commands.addCommands(Commands.slash("morad", "bitch").addOption(OptionType.BOOLEAN, "is-bird", "is he a bird", true));
-        commands.queue();
     }
 
 
@@ -64,7 +84,14 @@ public class main extends ListenerAdapter {
                 }
 
                 break;
-
+            case "moon-phase":
+                if (event.getOption("moon-style") != null){
+                    event.reply(moonHttpRequest(event.getOption("moon-style").getAsString())).queue();
+                }
+                else {
+                    event.reply(moonHttpRequest("default")).queue();
+                }
+                break;
                 default:
                 event.reply("What the fuck?!").queue();
         }
@@ -90,4 +117,5 @@ public class main extends ListenerAdapter {
 
         }
     }
+
 }
