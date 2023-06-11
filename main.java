@@ -18,6 +18,8 @@ public class main extends ListenerAdapter  {
     public static void updateCommands(JDA jda){
         CommandListUpdateAction commands = jda.updateCommands();
         commands.addCommands(Commands.slash("moon-phase", "Today's Moon Phase").addOptions(new OptionData(OptionType.STRING, "moon-style", "pick your preferred moon style", true).addChoice("default", "default").addChoice("sketch", "sketch").addChoice("shaded", "shaded")));
+        commands.addCommands(Commands.slash("star-chart", "Returns star chart of requested constellation").addOptions(new OptionData(OptionType.STRING, "constellation-name", "choose the constellation you want to view", true).addChoice("Andromeda","and").addChoice("Antlia","ant").addChoice("Apus","aps").addChoice("Aquarius","aqr").addChoice("Aquila","aql").addChoice("Ara","ara").addChoice("Aries","ari").addChoice("Auriga","aur").addChoice("Boötes","boo").addChoice("Caelum","cae").addChoice("Camelopardalis","cam").addChoice("Cancer","cnc").addChoice("Canes Venatici","cvn").addChoice("Canis Major","cma").addChoice("Canis Minor","cmi").addChoice("Capricornus","cap").addChoice("Carina","car").addChoice("Cassiopeia","cas").addChoice("Centaurus","cen").addChoice("Cepheus","cep").addChoice("Cetus","cet").addChoice("Chamaeleon","cha"))
+                .addOptions(new OptionData(OptionType.STRING, "chart-style", "pick your preffered star chart style", true).addChoice("Default","default").addChoice("Inverted","inverted").addChoice("Navy","navy").addChoice("Red","red")));
         commands.queue();
         System.out.println("Commands Updated!");
     }
@@ -25,6 +27,17 @@ public class main extends ListenerAdapter  {
         OkHttpClient client = new OkHttpClient();
         RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), new JSONObject(new MoonPhase(new MoonStyle(moonStyle, "stars", "black", "white", "white"), new MoonObserver(30.064286239773992f, 31.493958476697806f, "2023-06-10"))).toString());
         Request request = new Request.Builder().url("https://api.astronomyapi.com/api/v2/studio/moon-phase").addHeader("Authorization", "Bearer " + System.getenv("moonAPI")).post(body).build();
+        return getImage(client, request);
+    }
+
+    public String starHttpRequest(String constellation, String style){
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), new JSONObject(new StarChart(style, constellation, new MoonObserver(30.064286239773992f, 31.493958476697806f, "2023-06-10"))).toString());
+        Request request = new Request.Builder().url("https://api.astronomyapi.com/api/v2/studio/star-chart").addHeader("Authorization", "Bearer " + System.getenv("moonAPI")).post(body).build();
+        return getImage(client, request);
+    }
+
+    private String getImage(OkHttpClient client, Request request) {
         Call call = client.newCall(request);
         try (Response response = call.execute()) {
             JSONObject obj = new JSONObject(response.body().string());
@@ -35,16 +48,14 @@ public class main extends ListenerAdapter  {
         }
     }
 
+
     public static void main(String[] args) throws InterruptedException {
-
-
 
         JDA jda = JDABuilder.createDefault(System.getenv("token"))
                 .addEventListeners(new main())
                 .enableIntents(GatewayIntent.GUILD_VOICE_STATES)
                 .setActivity(Activity.watching("The Stars"))
                 .build();
-
 
         jda.awaitReady();
     }
@@ -53,37 +64,6 @@ public class main extends ListenerAdapter  {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         switch (event.getName()) {
-            case "say":
-                int count = 1;
-                StringBuilder content = new StringBuilder();
-                if (event.getOption("times-to-repeat") != null) {
-                    count = event.getOption("times-to-repeat").getAsInt();
-                }
-                for (int i = 0; i < count; i++) {
-                    content.append(event.getOption("shit-to-repeat").getAsString()).append("\n");
-                }
-                event.reply(content.toString()).queue();
-                break;
-            case "jmt":
-                event.reply("JMT el kalb").queue();
-                break;
-            case "lara":
-                if(event.getOption("is-stupid").getAsBoolean()){
-                    event.reply("Dumbass lara fuck you").queue();
-                }
-                else {
-                    event.reply("fuck you lara").queue();
-                }
-                break;
-            case "morad":
-                if(event.getOption("is-bird").getAsBoolean()){
-                    event.reply("I'm a bird").queue();
-                }
-                else{
-                    event.reply("ya deeny ya farida").queue();
-                }
-
-                break;
             case "moon-phase":
                 if (event.getOption("moon-style") != null){
                     event.reply(moonHttpRequest(event.getOption("moon-style").getAsString())).queue();
@@ -92,7 +72,14 @@ public class main extends ListenerAdapter  {
                     event.reply(moonHttpRequest("default")).queue();
                 }
                 break;
-                default:
+            case "star-chart":
+                try {
+                    event.reply(starHttpRequest(event.getOption("constellation-name").getAsString(), event.getOption("chart-style").getAsString()).toString()).queue();
+                }catch (Exception e){
+                    event.reply("something went wrong").queue();
+                }
+                break;
+            default:
                 event.reply("What the fuck?!").queue();
         }
     }
