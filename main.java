@@ -80,7 +80,7 @@ public class main extends ListenerAdapter  {
                 }
                 break;
             default:
-                event.reply("What the fuck?!").queue();
+                event.reply("Entry Not Recognized!").queue();
         }
     }
 
